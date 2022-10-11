@@ -1,0 +1,24 @@
+{
+  "name": "ts-todolist-project",
+  "version": "1.0.0",
+  "description": "- создание проекта\r - настройка конфига\r - скрипты для запуска\r - добавление типов и интерфейсов\r - создание защиты типов (type guards)\r - явно возвращаемые значения\r - кросбраузерная сборка проекта, публикация",
+  "main": "app.js",
+  "scripts": {
+    "start": "tsc --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maximmorenko/ts-todolist-project.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/maximmorenko/ts-todolist-project/issues"
+  },
+  "homepage": "https://github.com/maximmorenko/ts-todolist-project#readme",
+  "devDependencies": {
+    "typescript": "^4.8.4"
+  }
+}
