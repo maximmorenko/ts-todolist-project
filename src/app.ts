@@ -16,23 +16,32 @@ interface User {
     // Globals
     const todoList = document.getElementById('todo-list');
     const userSelect = document.getElementById('user-todo');
-    const form = document.querySelector('form');
+    const form = document.querySelector('form'); //HTMLFormElement | null
     let todos: Todo[] = [];
     let users: User[] = [];
 
     // Attach Events
     document.addEventListener('DOMContentLoaded', initApp);
-    form.addEventListener('submit', handleSubmit);
+    // так как формы может не быть, то добавим проверку, form?
+    // если она есть, то добавляем событие прослушки
+    form?.addEventListener('submit', handleSubmit);
 
     // Basic Logic
     function getUserName(userId: ID) {
-        const user = users.find((u) => u.id === userId);
-        return user.name;
+        const user = users.find((u) => u.id === userId); //User | undefined
+        // так как массив юзеров может быть пустой, то получим undefined
+        // если добавить в конце знак восклизания, который скажет TS что user точно есть, так стабртает но это опасно
+        // сделаем проверку
+        // если юзер есть, user? то возвращаем его имя либо пустую строку
+        return user?.name || '';
     }
+
     function printTodo({ id, userId, title, completed }: Todo) {
         const li = document.createElement('li');
         li.className = 'todo-item';
-        li.dataset.id = id;
+        // так как тип ID задан как строка либо число, и при undefined TS ругается , то конвертнем id в строку
+        // для этого воспользуемся функцией String()
+        li.dataset.id = String(id); //string | undefined
         li.innerHTML = `<span>${title} <i>by</i> <b>${getUserName(
         userId
         )}</b></span>`;
@@ -49,26 +58,36 @@ interface User {
 
         li.prepend(status);
         li.append(close);
-
-        todoList.prepend(li);
+        
+        // добавим проверку, если todoList есть то добавлеем в него li
+        todoList?.prepend(li);
     }
 
     function createUserOption(user: User) {
-        const option = document.createElement('option');
-        option.value = user.id;
-        option.innerText = user.name;
-
-        userSelect.append(option);
+        // прежде чем создавать опции провеврим есть ли сам велект
+        if (userSelect) {
+            const option = document.createElement('option');
+            option.value = String(user.id); // получаем число, а TS ждет строку, поэтому явно переводим число в строку через функцию String()а
+            option.innerText = user.name;
+    
+            userSelect.append(option);
+        }
     }
 
     function removeTodo(todoId: ID) {
-        todos = todos.filter((todo) => todo.id !== todoId);
+        // сделаем проверку на наличие списка, если список есть, то сделаем проверку на наличие туду
+        if (todoList) {
+            todos = todos.filter((todo) => todo.id !== todoId);
 
-        const todo = todoList.querySelector(`[data-id="${todoId}"]`);
-        todo.querySelector('input').removeEventListener('change', handleTodoChange);
-        todo.querySelector('.close').removeEventListener('click', handleClose);
+            const todo = todoList.querySelector(`[data-id="${todoId}"]`);
 
-        todo.remove();
+            if (todo) {
+                todo.querySelector('input')?.removeEventListener('change', handleTodoChange);
+                todo.querySelector('.close')?.removeEventListener('click', handleClose);
+    
+                todo.remove();
+            }
+        }
     }
 
     // есть глобальный тип Error
@@ -86,24 +105,41 @@ interface User {
         users.forEach((user) => createUserOption(user));
         });
     }
-    function handleSubmit(event) {
+    // для ивента используем глобальный тип Event 
+    // он стал доступен в результате подключения 'DOM'
+    function handleSubmit(event: Event) {
         event.preventDefault();
-
-        createTodo({
-        userId: Number(form.user.value),
-        title: form.todo.value,
-        completed: false,
-        });
+        // сделаем проверку, есть ли форма, если есть то достаем из нее значения юсер и туду
+        if (form) {
+            createTodo({
+                userId: Number(form.user.value),
+                title: form.todo.value,
+                completed: false,
+            });
+        }
     }
-    function handleTodoChange() {
-        const todoId = this.parentElement.dataset.id;
-        const completed = this.checked;
 
-        toggleTodoComplete(todoId, completed);
+
+    function handleTodoChange(this: HTMLInputElement) {
+        // смотрим выше где применяется эта функция 
+        // находим что она вешается на инпут, а значит this будет инпут, глобальный тип его HTMLInputElement
+        // также сделаем проверку на наличие родительского элемента parentElement?
+        const parent = this.parentElement;
+        if (parent) {
+            const todoId = parent.dataset.id;
+            const completed = this.checked;
+            // добавим проверку на наличие todoId
+            todoId && toggleTodoComplete(todoId, completed); // если todoId не пустой тогда передаем его как аргумент
+        }
     }
-    function handleClose() {
-        const todoId = this.parentElement.dataset.id;
-        deleteTodo(todoId);
+
+    function handleClose(this: HTMLSpanElement) {
+        const parent = this.parentElement
+
+        if (parent) {
+            const todoId = parent.dataset.id;
+            todoId && deleteTodo(todoId);
+        }
     }
 
     // Async logic
@@ -116,7 +152,10 @@ interface User {
 
         return data;
         } catch (error) {
-        alertError(error);
+            // во всех кетчах делаем проверку на то что тип ошибки является инстансом от глобального тип а ошибки 
+            if (error instanceof Error) {
+                alertError(error);
+            }
         }
     }
 
@@ -129,11 +168,14 @@ interface User {
 
         return data;
         } catch (error) {
-        alertError(error);
+            if (error instanceof Error) {
+                alertError(error);
+            }
         }
     }
 
-    async function createTodo(todo: Todo) {
+    async function createTodo(todo: Omit<Todo, 'id'>) {
+        // в момент создания туду нам ничего неизвестно про id, который есть в интерфейсе, поэтому его нужно здесь исключить Omit<>
         try {
         const response = await fetch(
             'https://jsonplaceholder.typicode.com/todos',
@@ -150,11 +192,13 @@ interface User {
 
         printTodo(newTodo);
         } catch (error) {
-        alertError(error);
+            if (error instanceof Error) {
+                alertError(error);
+            }    
         }
     }
 
-    async function toggleTodoComplete(todoId: ID, completed) {
+    async function toggleTodoComplete(todoId: ID, completed: boolean) {
         try {
         const response = await fetch(
             `https://jsonplaceholder.typicode.com/todos/${todoId}`,
@@ -171,7 +215,9 @@ interface User {
             throw new Error('Failed to connect with the server! Please try later.');
         }
         } catch (error) {
-        alertError(error);
+            if (error instanceof Error) {
+                alertError(error);
+            }
         }
     }
 
@@ -193,7 +239,9 @@ interface User {
             throw new Error('Failed to connect with the server! Please try later.');
         }
         } catch (error) {
-        alertError(error);
+            if (error instanceof Error) {
+                alertError(error);
+            }
         }
     }
 })()
