@@ -1,4 +1,4 @@
-# Миграция проекта Vanila JS -> TypeScript
+# [Миграция проекта Vanila JS -> TypeScript DEMO](https://ts-todolist-project.vercel.app/)
 
 ## Задачи:
 - создание проекта
