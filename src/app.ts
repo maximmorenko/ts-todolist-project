@@ -98,11 +98,13 @@ interface User {
     // Event Logic
     function initApp() {
         Promise.all([getAllTodos(), getAllUsers()]).then((values) => {
-        [todos, users] = values;
+            [todos, users] = values; //не всегда есть возможность работать с глобальными переменными
+            // чтобы не было ошибок, в асинхронных функциях нужно явно указать что на выходе будет массив туду или юзеров, 
+            // если нет, то вернуть пустой массив
 
-        // Отправить в разметку
-        todos.forEach((todo) => printTodo(todo));
-        users.forEach((user) => createUserOption(user));
+            // Отправить в разметку
+            todos.forEach((todo) => printTodo(todo));
+            users.forEach((user) => createUserOption(user));
         });
     }
     // для ивента используем глобальный тип Event 
@@ -143,7 +145,7 @@ interface User {
     }
 
     // Async logic
-    async function getAllTodos() {
+    async function getAllTodos(): Promise<Todo[]> {
         try {
         const response = await fetch(
             'https://jsonplaceholder.typicode.com/todos?_limit=15'
@@ -153,13 +155,14 @@ interface User {
         return data;
         } catch (error) {
             // во всех кетчах делаем проверку на то что тип ошибки является инстансом от глобального тип а ошибки 
-            if (error instanceof Error) {
+            if (error instanceof Error) 
                 alertError(error);
-            }
+            
+            return [] // в противном случае возвращаем пустой массив
         }
     }
 
-    async function getAllUsers() {
+    async function getAllUsers(): Promise<User[]> {
         try {
         const response = await fetch(
             'https://jsonplaceholder.typicode.com/users?_limit=5'
@@ -168,9 +171,10 @@ interface User {
 
         return data;
         } catch (error) {
-            if (error instanceof Error) {
+            if (error instanceof Error) 
                 alertError(error);
-            }
+                
+            return [] // в противном случае возвращаем пустой массив
         }
     }
 
@@ -180,11 +184,11 @@ interface User {
         const response = await fetch(
             'https://jsonplaceholder.typicode.com/todos',
             {
-            method: 'POST',
-            body: JSON.stringify(todo),
-            headers: {
-                'Content-Type': 'application/json',
-            },
+                method: 'POST',
+                body: JSON.stringify(todo),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
             }
         );
 
@@ -203,11 +207,11 @@ interface User {
         const response = await fetch(
             `https://jsonplaceholder.typicode.com/todos/${todoId}`,
             {
-            method: 'PATCH',
-            body: JSON.stringify({ completed }),
-            headers: {
-                'Content-Type': 'application/json',
-            },
+                method: 'PATCH',
+                body: JSON.stringify({ completed }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
             }
         );
 
@@ -226,10 +230,10 @@ interface User {
         const response = await fetch(
             `https://jsonplaceholder.typicode.com/todos/${todoId}`,
             {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
             }
         );
 
